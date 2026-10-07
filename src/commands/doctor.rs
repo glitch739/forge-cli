@@ -1,5 +1,6 @@
 //! `forge doctor`: verifies that the local environment can run Forge.
 
+use std::io::ErrorKind;
 use std::process::Command;
 use std::time::Instant;
 
@@ -79,7 +80,7 @@ fn system() -> Check {
 }
 
 /// Looks up an external tool on `PATH` by running it with `args`.
-/// A missing tool is reported at `missing_level`.
+/// A missing or broken tool is reported at `missing_level`.
 fn tool(
     label: &'static str,
     name: &str,
@@ -87,27 +88,39 @@ fn tool(
     missing_level: Level,
     why: &'static str,
 ) -> Check {
-    match Command::new(name).args(args).output() {
+    let (level, detail) = match Command::new(name).args(args).output() {
         Ok(out) => {
             // Some tools (e.g. `ssh -V`) print their version to stderr.
             let text = if out.stdout.is_empty() {
-                out.stderr
+                &out.stderr
             } else {
-                out.stdout
+                &out.stdout
             };
-            Check {
-                level: Level::Ok,
-                label,
-                detail: short_version(name, &String::from_utf8_lossy(&text)),
-                hint: None,
+            let text = String::from_utf8_lossy(text);
+            if out.status.success() {
+                (Level::Ok, short_version(name, &text))
+            } else {
+                // Found, but broken, e.g. the macOS `git` stub without Xcode tools.
+                let reason = first_line(&text);
+                let reason = if reason.is_empty() {
+                    format!("exited with {}", out.status)
+                } else {
+                    reason.to_string()
+                };
+                (missing_level, format!("not working: {reason}"))
             }
         }
-        Err(_) => Check {
-            level: missing_level,
-            label,
-            detail: "not found on PATH".into(),
-            hint: Some(why),
-        },
+        Err(err) if err.kind() == ErrorKind::NotFound => {
+            (missing_level, "not found on PATH".into())
+        }
+        Err(err) => (missing_level, format!("cannot run: {err}")),
+    };
+
+    Check {
+        level,
+        label,
+        detail,
+        hint: (level != Level::Ok).then_some(why),
     }
 }
 
@@ -139,7 +152,7 @@ fn config_file(config: &Config) -> Check {
 /// `git version 2.39.5 (Apple Git-154)` -> `2.39.5 (Apple Git-154)`,
 /// `OpenSSH_9.9p2, LibreSSL 3.3.6` -> `OpenSSH_9.9p2`.
 fn short_version(name: &str, output: &str) -> String {
-    let line = output.lines().next().unwrap_or_default().trim();
+    let line = first_line(output);
     let line = line
         .strip_prefix(&format!("{name} version "))
         .unwrap_or(line);
@@ -151,9 +164,38 @@ fn short_version(name: &str, output: &str) -> String {
     }
 }
 
+fn first_line(text: &str) -> &str {
+    text.lines().next().unwrap_or_default().trim()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::short_version;
+    use super::{short_version, tool};
+    use crate::utils::Level;
+
+    // These use `cargo`, which is always on PATH while `cargo test` runs.
+
+    #[test]
+    fn working_tool_passes() {
+        let check = tool("Cargo", "cargo", &["--version"], Level::Fail, "why");
+        assert_eq!(check.level, Level::Ok);
+        assert!(check.hint.is_none());
+    }
+
+    #[test]
+    fn failing_tool_is_reported() {
+        let check = tool("Cargo", "cargo", &["--no-such-flag"], Level::Fail, "why");
+        assert_eq!(check.level, Level::Fail);
+        assert!(check.detail.starts_with("not working"), "{}", check.detail);
+        assert_eq!(check.hint, Some("why"));
+    }
+
+    #[test]
+    fn missing_tool_is_not_found() {
+        let check = tool("X", "forge-no-such-program", &[], Level::Warn, "why");
+        assert_eq!(check.level, Level::Warn);
+        assert_eq!(check.detail, "not found on PATH");
+    }
 
     #[test]
     fn strips_git_prefix() {
