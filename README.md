@@ -11,15 +11,28 @@ cargo build --release
 ./target/release/forge --help
 ```
 
-## Commands
+## Install from source
 
-| Command          | Description                                   |
-| ---------------- | --------------------------------------------- |
-| `forge status`   | Show the current state of the environment     |
-| `forge doctor`   | Check that the local environment is set up    |
-| `forge --version`| Print the version                             |
+```sh
+cargo install --path .
+forge
+```
 
-Colors are disabled automatically when output is not a terminal or `NO_COLOR` is set.
+## Usage
+
+| Command        | Description                                   |
+| -------------- | --------------------------------------------- |
+| `forge`        | Show the help with all commands               |
+| `forge status` | Show the current state of the environment     |
+| `forge doctor` | Check that the environment is set up correctly |
+
+| Option           | Description                                      |
+| ---------------- | ------------------------------------------------ |
+| `--theme <NAME>` | Color theme: `default`, `github`, `dark`, `light` |
+| `--no-color`     | Disable colored output                           |
+| `-V, --version`  | Print the version                                |
+
+Colors are also disabled automatically when output is not a terminal or `NO_COLOR` is set.
 
 ## License
 

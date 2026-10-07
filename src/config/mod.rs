@@ -18,12 +18,6 @@ impl Config {
             path: config_dir().map(|dir| dir.join(APP_DIR).join(FILE_NAME)),
         }
     }
-
-    pub fn display_path(&self) -> String {
-        self.path
-            .as_ref()
-            .map_or_else(|| "unavailable".into(), |p| p.display().to_string())
-    }
 }
 
 /// Platform config directory:

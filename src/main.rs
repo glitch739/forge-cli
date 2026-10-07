@@ -5,13 +5,17 @@ mod utils;
 
 use std::process::ExitCode;
 
-use clap::Parser;
-
 fn main() -> ExitCode {
-    let cli = cli::Cli::parse();
-    let config = config::Config::load();
+    let cli = cli::parse();
+    utils::init(cli.theme, cli.no_color);
 
-    match commands::run(cli.command, &config) {
+    let Some(command) = cli.command else {
+        cli::print_help();
+        return ExitCode::SUCCESS;
+    };
+
+    let config = config::Config::load();
+    match commands::run(command, &config) {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
             utils::error(&err);

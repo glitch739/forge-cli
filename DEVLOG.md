@@ -57,3 +57,63 @@ instead of discovering it at release time.
 - `cargo clippy -- -D warnings` and `cargo fmt --check` are my pre-commit
   routine from now on.
 - `cargo run -- <args>`: everything after `--` goes to my program, not to cargo.
+
+## 2026-10-07 — #3: A real `doctor`
+
+**What I did**
+- Wrote a roadmap (`ROADMAP.md`) so I know what each version is about.
+- `forge doctor` now does real checks:
+  - `ssh`: required for remote hosts later, so a missing one is a failure.
+  - `git`: only needed for future features, so missing it is just a warning.
+  - config: shows where the config file is expected and whether it exists.
+- Each problem gets a one-line hint, and there's a summary at the end.
+- `doctor` exits with code 1 if any check fails, so it can be used in scripts.
+- Split `commands` into one module per subcommand (`status.rs`, `doctor.rs`).
+- Error messages on stderr now decide on color based on stderr, not stdout.
+- First unit tests, for the version-string parsing.
+
+**Learned**
+- `std::process::Command` finds programs on `PATH` on every platform
+  (`ssh.exe` on Windows too), and a missing program comes back as an `Err`
+  from `.output()`. No extra crate needed.
+- `ssh -V` prints its version to stderr, not stdout. Fun.
+- `#[cfg(test)] mod tests` keeps tests next to the code without shipping them
+  in the release binary.
+- Quick way to test the failure path: `PATH=/nonexistent ~/.cargo/bin/cargo run -- doctor`.
+
+## 2026-10-07 — #4: Look & feel
+
+**Rethinking the roadmap.** I made the vision sharper: Forge always runs on
+my machine. On a Linux server it sends plain shell commands over `ssh` and
+renders the results locally, in exactly the same format. `forge use web1`
+will switch the target, like a `kubectl` context. Before any SSH work, v0.4
+introduces a `Target` layer, so remote support becomes "just another target"
+instead of a rewrite. Project tools (`build`, `test`, `lint` for Cargo, Go and
+npm) moved into the plan as v0.7.
+
+**CLI vs. TUI vs. GUI.** A CLI can look great: colors, Unicode boxes, an ASCII
+logo. A TUI is a full-screen interactive app (`htop`, `lazygit`), a GUI is a
+windowed app. Forge stays a CLI, but a good-looking one.
+
+**What I did (v0.3)**
+- ASCII `FORGE` logo with the version in `--help`; running plain `forge` now
+  shows the help instead of an error.
+- Help with colored sections and an Examples block (clap `Styles`,
+  `before_help`, `after_help`).
+- `doctor`: title, a System row, a separator and a Result block with colored
+  counts and the elapsed time.
+- `status`: a boxed card (`╭─╮`) with the target and working directory,
+  followed by user, shell, config path and version.
+- Themes: `default`, `github`, `dark`, `light`, chosen with `--theme`.
+  256-color palettes, so they work in almost every terminal.
+- Global `--no-color` flag; paths under the home directory are shown as `~/…`.
+
+**Learned**
+- Help is rendered by clap *during* parsing, before my flags exist. That's why
+  `--no-color` is checked in the raw arguments up front.
+- `OnceLock` is a clean way to set the theme once and read it from anywhere,
+  without passing it to every function.
+- Box drawing needs widths computed on the plain text. Escape codes have
+  length but no width, so color is applied after the padding.
+- Nerd Font icons look great in screenshots, but show up as empty boxes for
+  anyone without the font. I stuck to plain Unicode.
