@@ -1,0 +1,20 @@
+[package]
+name = "forge"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+description = "A cross-platform developer and operations CLI"
+license = "MIT"
+readme = "README.md"
+
+[[bin]]
+name = "forge"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", default-features = false, features = ["std", "derive", "help", "usage", "error-context", "color", "suggestions"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
