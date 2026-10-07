@@ -20,3 +20,7 @@ cargo build --release
 | `forge --version`| Print the version                             |
 
 Colors are disabled automatically when output is not a terminal or `NO_COLOR` is set.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
