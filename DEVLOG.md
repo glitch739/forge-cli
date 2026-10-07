@@ -117,3 +117,26 @@ windowed app. Forge stays a CLI, but a good-looking one.
   length but no width, so color is applied after the padding.
 - Nerd Font icons look great in screenshots, but show up as empty boxes for
   anyone without the font. I stuck to plain Unicode.
+
+
+## 2026-10-07 — #5: Next steps
+
+**Repo housekeeping.** An early commit had an unwanted bug, and GitHub kept showing it even after I rewrote the commit. 
+The cleanest fix was to delete and recreate the repo from my clean local history.
+
+**Plan for tomorrow evening: v0.4 Targets**
+The goal is that commands no longer spawn processes themselves. They ask a
+*target* to run things, so SSH support later is just another target.
+
+- [ ] Define a `Target` trait: run a command, get stdout/stderr/exit code back
+- [ ] Implement `Local` using `std::process::Command`
+- [ ] Move `doctor` and `status` onto the target (no direct `Command` calls left)
+- [ ] Show the active target in `status` (`local` for now)
+- [ ] A few unit tests with a fake target, to test `doctor` without real tools
+- [ ] Bump to v0.4.0, update ROADMAP and DEVLOG
+- [ ] Decide on config loading: `toml` crate vs. a tiny hand-written parser
+
+**Things I want to learn along the way**
+- Traits and trait objects (`&dyn Target` vs. generics)
+- Writing my own error type instead of passing `String`s around
+- How to test code that talks to the outside world (fakes/mocks)
