@@ -36,3 +36,24 @@ The goal is to publish it on GitHub and make it installable with `brew install`.
 - Load a config file (TOML?) — still need to decide if it's worth the dependency.
 - Real `doctor` checks (e.g. whether `ssh` and `git` are on the PATH).
 - CI (GitHub Actions), release binaries, Homebrew tap.
+
+## 2026-10-07 — #2: First build and CI
+
+**What I did**
+- Installed Rust via rustup and ran the first build. Everything compiled on
+  the first try, and `clippy -D warnings` came back clean.
+- Added the MIT license and committed `Cargo.lock`. For a binary crate the
+  lockfile belongs in the repo, so CI and releases build the exact same
+  dependency versions as my machine.
+- Applied `rustfmt`.
+- Set up GitHub Actions CI: format check, plus clippy, tests and a smoke run
+  of `status` and `doctor` on Linux, macOS and Windows.
+
+**Why CI this early?** I don't have a Windows machine. CI is the cheapest way
+to find out whether Forge actually builds and runs there, on every push,
+instead of discovering it at release time.
+
+**Learned**
+- `cargo clippy -- -D warnings` and `cargo fmt --check` are my pre-commit
+  routine from now on.
+- `cargo run -- <args>`: everything after `--` goes to my program, not to cargo.

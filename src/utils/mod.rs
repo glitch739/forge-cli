@@ -40,12 +40,19 @@ fn theme() -> &'static Theme {
 }
 
 pub fn header(title: &str) {
-    println!("{} {}", paint(theme().accent, "forge"), paint(theme().muted, title));
+    println!(
+        "{} {}",
+        paint(theme().accent, "forge"),
+        paint(theme().muted, title)
+    );
     println!();
 }
 
 pub fn field(label: &str, value: &str) {
-    println!("  {} {value}", paint(theme().muted, &format!("{label:<10}")));
+    println!(
+        "  {} {value}",
+        paint(theme().muted, &format!("{label:<10}"))
+    );
 }
 
 pub fn check(label: &str, ok: bool) {
