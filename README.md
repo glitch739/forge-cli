@@ -2,7 +2,7 @@
 
 A cross-platform developer and operations CLI for macOS, Linux and (soon) Windows.
 
-> Early development. Only the foundations are in place.
+> Early development. Only the foundations are in place. See the [roadmap](ROADMAP.md).
 
 ## Build
 
